@@ -12,8 +12,14 @@ FOUR_DIRECTIONS: list[Position] = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
 # 8-directional movements: 4 cardinal + 4 diagonal
 EIGHT_DIRECTIONS: list[Position] = [
-    (-1, 0), (1, 0), (0, -1), (0, 1),
-    (-1, -1), (-1, 1), (1, -1), (1, 1),
+    (-1, 0),
+    (1, 0),
+    (0, -1),
+    (0, 1),
+    (-1, -1),
+    (-1, 1),
+    (1, -1),
+    (1, 1),
 ]
 
 

@@ -11,6 +11,16 @@
 - Use pip+build instead of uv in semantic-release container
   ([`a740379`](https://github.com/ahincho/search-library/commit/a74037961a15263a40bc9b86740afb2f25a9d6a7))
 
+### Chores
+
+- Add workflow_dispatch trigger to CD for manual releases
+  ([`15c5bb0`](https://github.com/ahincho/search-library/commit/15c5bb020e562d4ea9906c190cffacde2a321349))
+
+### Documentation
+
+- Improve README with badges, examples, architecture and roadmap
+  ([`e6e21ab`](https://github.com/ahincho/search-library/commit/e6e21abd928097180bd5ad6b1f81c2820a7f9fb6))
+
 ### Features
 
 - Initial implementation of search-library with A* algorithm - Core abstractions: Node, State,

@@ -1,0 +1,107 @@
+[project]
+name = "search-library"
+version = "0.1.0"
+description = "A professional, extensible search algorithm framework for discrete spaces (graphs and grids). Implements A* with pluggable heuristics."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "ahincho", email = "ahincho@unsa.edu.pe" }
+]
+requires-python = ">=3.11"
+keywords = ["astar", "a-star", "pathfinding", "search", "graph", "grid", "algorithm", "heuristic"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/ahincho/search-library"
+Repository = "https://github.com/ahincho/search-library"
+Issues = "https://github.com/ahincho/search-library/issues"
+Documentation = "https://github.com/ahincho/search-library#readme"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific rules
+]
+ignore = ["E501", "TC001", "TC002", "TC003"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["search_library"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+packages = ["search_library"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=search_library --cov-report=term-missing --cov-report=html --cov-fail-under=90"
+
+[tool.coverage.run]
+source = ["search_library"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "@overload",
+]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+branch = "main"
+commit_message = "chore(release): {version}"
+build_command = "uv build"
+
+[tool.semantic_release.changelog]
+changelog_file = "CHANGELOG.md"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "docs", "refactor", "test", "chore", "perf"]

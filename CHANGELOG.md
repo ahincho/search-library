@@ -1,6 +1,47 @@
 # CHANGELOG
 
 
+## v1.0.0 (2026-06-21)
+
+### Bug Fixes
+
+- Critical correctness and consistency fixes for v1.0 - DFS: store parent on stack to prevent
+  came_from overwrite in multi-path graphs - Bidirectional: require reverse_problem explicitly
+  (remove fragile _find_goal) - Bidirectional: recalculate total_cost from actual path edges for
+  correctness - AStarSearch: now inherits from SearchAlgorithm for polymorphic consistency - Extract
+  _reconstruct_path to SearchAlgorithm base (DRY across all algorithms) - Remove dead code (cost_to
+  dict in BFS, redundant Generic[T]) - Export SearchAlgorithm in algorithms __init__ BREAKING:
+  BidirectionalSearch now requires reverse_problem keyword argument
+  ([`4e1ea51`](https://github.com/ahincho/search-library/commit/4e1ea518d48313e98dc4bad45fae715d02f8c860))
+
+### Chores
+
+- **release**: Prepare v1.0 stable release - Update pyproject.toml metadata (description, keywords,
+  status Beta) - Add __version__ = '1.0.0' to package __init__ - Rewrite README.md as academic
+  reference documentation - Include algorithm comparison table, architecture diagram, usage examples
+  - Add references to foundational papers (Hart et al., Russell & Norvig) - All 147 tests passing,
+  96%+ coverage, mypy strict, ruff clean
+  ([`c028210`](https://github.com/ahincho/search-library/commit/c0282106fee666195a82b7666acb767513d56a30))
+
+### Features
+
+- Implement BFS, DFS, Dijkstra, Bidirectional Search and visualization utilities - BFS: shortest
+  path by edge count using FIFO queue (deque) - DFS: depth-first exploration using LIFO stack -
+  Dijkstra: optimal weighted path using priority queue (heapq) - Bidirectional Search: simultaneous
+  BFS from start and goal - SearchAlgorithm ABC: unified interface for all algorithms -
+  Visualization: render_grid(), render_search_result(), print_grid() - All algorithms support
+  max_iterations, strict mode, track_explored - Convenience functions: bfs_search(), dfs_search(),
+  dijkstra_search(), bidirectional_search() - 146 tests passing, 96%+ coverage
+  ([`6e4487b`](https://github.com/ahincho/search-library/commit/6e4487b13a06c3bce970bd453a3a523ccaf2a44d))
+
+- Release v1.0 stable with complete algorithm suite BREAKING CHANGE: BidirectionalSearch now
+  requires reverse_problem parameter. - Format all files for CI consistency - Complete framework:
+  A*, BFS, DFS, Dijkstra, Bidirectional Search - Academic README with references and architecture
+  documentation - 147 tests, 96%+ coverage, mypy strict, ruff clean - Production-ready for academic
+  and professional use
+  ([`0809e78`](https://github.com/ahincho/search-library/commit/0809e782d508b191cf3f413b52565025071f207d))
+
+
 ## v0.2.0 (2026-06-21)
 
 ### Features

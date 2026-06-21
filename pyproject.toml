@@ -1,6 +1,6 @@
 [project]
 name = "search-library"
-version = "0.2.0"
+version = "1.0.0"
 description = "An extensible search algorithm framework for discrete spaces. Implements A*, BFS, DFS, Dijkstra and Bidirectional Search for graphs and grids."
 readme = "README.md"
 license = "MIT"
@@ -32,6 +32,7 @@ Homepage = "https://github.com/ahincho/search-library"
 Repository = "https://github.com/ahincho/search-library"
 Issues = "https://github.com/ahincho/search-library/issues"
 Documentation = "https://github.com/ahincho/search-library#readme"
+
 
 
 

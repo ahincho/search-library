@@ -109,15 +109,23 @@ class BidirectionalSearch(SearchAlgorithm[T]):
 
             # Expand forward frontier (one node)
             meeting = self._expand_level(
-                forward_queue, forward_visited, forward_parent,
-                backward_visited, self._problem,
+                forward_queue,
+                forward_visited,
+                forward_parent,
+                backward_visited,
+                self._problem,
             )
             iterations += 1
 
             if meeting is not None:
                 return self._build_result(
-                    meeting, forward_parent, backward_parent,
-                    initial, goal, forward_visited, backward_visited,
+                    meeting,
+                    forward_parent,
+                    backward_parent,
+                    initial,
+                    goal,
+                    forward_visited,
+                    backward_visited,
                     track_explored,
                 )
 
@@ -126,15 +134,23 @@ class BidirectionalSearch(SearchAlgorithm[T]):
 
             # Expand backward frontier (one node)
             meeting = self._expand_level(
-                backward_queue, backward_visited, backward_parent,
-                forward_visited, self._reverse_problem,
+                backward_queue,
+                backward_visited,
+                backward_parent,
+                forward_visited,
+                self._reverse_problem,
             )
             iterations += 1
 
             if meeting is not None:
                 return self._build_result(
-                    meeting, forward_parent, backward_parent,
-                    initial, goal, forward_visited, backward_visited,
+                    meeting,
+                    forward_parent,
+                    backward_parent,
+                    initial,
+                    goal,
+                    forward_visited,
+                    backward_visited,
                     track_explored,
                 )
 

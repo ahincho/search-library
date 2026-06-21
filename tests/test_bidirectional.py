@@ -63,9 +63,7 @@ class TestBidirectionalSearch:
         grid = Grid(50, 50)
         forward = GridSearchProblem(grid, (0, 0), (49, 49))
         reverse = GridSearchProblem(grid, (49, 49), (0, 0))
-        result = BidirectionalSearch(forward, reverse_problem=reverse).search(
-            max_iterations=5
-        )
+        result = BidirectionalSearch(forward, reverse_problem=reverse).search(max_iterations=5)
 
         assert result.success is False
 

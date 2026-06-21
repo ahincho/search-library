@@ -114,9 +114,7 @@ class Dijkstra(SearchAlgorithm[T]):
                     g_scores[successor_state] = tentative_g
                     came_from[successor_state] = current.state
 
-                    successor_node = Node(
-                        state=successor_state, g_cost=tentative_g, h_cost=0.0
-                    )
+                    successor_node = Node(state=successor_state, g_cost=tentative_g, h_cost=0.0)
                     counter += 1
                     heapq.heappush(open_list, (tentative_g, counter, successor_node))
 

@@ -37,9 +37,7 @@ class TestRenderGrid:
     def test_custom_characters(self) -> None:
         grid = Grid(3, 3)
         path = [(0, 0), (1, 0), (2, 0)]
-        output = render_grid(
-            grid, path=path, start_char="@", goal_char="X", path_char="+"
-        )
+        output = render_grid(grid, path=path, start_char="@", goal_char="X", path_char="+")
         assert "@" in output
         assert "X" in output
         assert "+" in output

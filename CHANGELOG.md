@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v0.2.0 (2026-06-21)
+
+### Features
+
+- Apply code review improvements for production readiness - Grid: diagonal movements now cost
+  sqrt(2) for geometric correctness - Type safety: TypeVar bound=Hashable prevents runtime errors
+  with unhashable states - Memory: replaced Node parent chain with external came_from dict - Search
+  limits: added max_iterations parameter to prevent runaway searches - SearchResult: explored_states
+  is now optional (None by default) to save memory - Graph: internal structure migrated to dict[T,
+  dict[T, float]] for O(1) has_edge - Exceptions: added strict mode that raises
+  NoSolutionFoundError/SearchTimeoutError - API: added astar_search() convenience function - Removed
+  unused State protocol (replaced by TypeVar bound)
+  ([`39f8f11`](https://github.com/ahincho/search-library/commit/39f8f111e276991c33fbf59a8577f528daf9a2bc))
+
+
 ## v0.1.0 (2026-06-20)
 
 ### Bug Fixes

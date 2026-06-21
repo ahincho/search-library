@@ -1,16 +1,16 @@
 [project]
 name = "search-library"
 version = "0.2.0"
-description = "A professional, extensible search algorithm framework for discrete spaces (graphs and grids). Implements A* with pluggable heuristics."
+description = "An extensible search algorithm framework for discrete spaces. Implements A*, BFS, DFS, Dijkstra and Bidirectional Search for graphs and grids."
 readme = "README.md"
 license = "MIT"
 authors = [
     { name = "ahincho", email = "ahincho@unsa.edu.pe" }
 ]
 requires-python = ">=3.11"
-keywords = ["astar", "a-star", "pathfinding", "search", "graph", "grid", "algorithm", "heuristic"]
+keywords = ["astar", "a-star", "pathfinding", "search", "graph", "grid", "algorithm", "heuristic", "bfs", "dfs", "dijkstra"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",

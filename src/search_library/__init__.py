@@ -1,5 +1,7 @@
 """search-library: A professional, extensible search algorithm framework."""
 
+__version__ = "1.0.0"
+
 from search_library.algorithms.astar import AStarSearch, astar_search
 from search_library.algorithms.bfs import BFS, bfs_search
 from search_library.algorithms.bidirectional import BidirectionalSearch, bidirectional_search

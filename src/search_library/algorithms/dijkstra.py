@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import heapq
-from typing import Generic
 
 from search_library.algorithms.base import SearchAlgorithm
 from search_library.core.nodes import Node
@@ -13,7 +12,7 @@ from search_library.core.types import T
 from search_library.exceptions.exceptions import NoSolutionFoundError, SearchTimeoutError
 
 
-class Dijkstra(SearchAlgorithm[T], Generic[T]):
+class Dijkstra(SearchAlgorithm[T]):
     """Dijkstra's shortest path algorithm.
 
     Equivalent to A* with h(n)=0. Uses a priority queue ordered by g(n)
@@ -27,7 +26,6 @@ class Dijkstra(SearchAlgorithm[T], Generic[T]):
         - Shortest path in weighted graphs
         - When no admissible heuristic is available
         - Network routing
-        - All-pairs shortest path (when run from each source)
     """
 
     def __init__(self, problem: SearchProblem[T]) -> None:
@@ -66,7 +64,6 @@ class Dijkstra(SearchAlgorithm[T], Generic[T]):
                 explored_states=frozenset({initial}) if track_explored else None,
             )
 
-        # Priority queue: (g_cost, counter, node)
         counter = 0
         start_node = Node(state=initial, g_cost=0.0, h_cost=0.0)
         open_list: list[tuple[float, int, Node[T]]] = []
@@ -132,17 +129,6 @@ class Dijkstra(SearchAlgorithm[T], Generic[T]):
             success=False,
             explored_states=frozenset(closed_set) if track_explored else None,
         )
-
-    @staticmethod
-    def _reconstruct_path(came_from: dict[T, T], start: T, goal: T) -> list[T]:
-        """Reconstruct path from came_from map."""
-        path: list[T] = [goal]
-        current = goal
-        while current != start:
-            current = came_from[current]
-            path.append(current)
-        path.reverse()
-        return path
 
 
 def dijkstra_search(

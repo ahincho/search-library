@@ -43,3 +43,23 @@ class SearchAlgorithm(ABC, Generic[T]):
         Returns:
             SearchResult containing path, cost, and stats.
         """
+
+    @staticmethod
+    def _reconstruct_path(came_from: dict[T, T], start: T, goal: T) -> list[T]:
+        """Reconstruct path from a came_from map.
+
+        Args:
+            came_from: Mapping of state -> parent state.
+            start: The initial state.
+            goal: The goal state.
+
+        Returns:
+            Ordered list of states from start to goal (inclusive).
+        """
+        path: list[T] = [goal]
+        current = goal
+        while current != start:
+            current = came_from[current]
+            path.append(current)
+        path.reverse()
+        return path

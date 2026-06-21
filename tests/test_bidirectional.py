@@ -25,6 +25,7 @@ class TestBidirectionalSearch:
         assert result.success is True
         assert result.path[0] == "A"
         assert result.path[-1] == "D"
+        assert result.total_cost == 3.0
 
     def test_finds_path_in_undirected_grid(self) -> None:
         grid = Grid(5, 5)
@@ -35,12 +36,14 @@ class TestBidirectionalSearch:
         assert result.success is True
         assert result.path[0] == (0, 0)
         assert result.path[-1] == (4, 4)
+        assert result.total_cost > 0
 
     def test_start_is_goal(self) -> None:
         g = Graph[str](directed=False)
         g.add_node("A")
         forward = g.to_search_problem("A", "A")
-        result = BidirectionalSearch(forward).search()
+        reverse = g.to_search_problem("A", "A")
+        result = BidirectionalSearch(forward, reverse_problem=reverse).search()
 
         assert result.success is True
         assert result.path == ["A"]
@@ -91,7 +94,6 @@ class TestBidirectionalSearch:
 
         assert bidir_result.success is True
         assert bfs_result.success is True
-        # Bidirectional typically explores fewer nodes
         assert bidir_result.nodes_explored <= bfs_result.nodes_explored
 
     def test_convenience_function(self) -> None:
@@ -103,15 +105,29 @@ class TestBidirectionalSearch:
 
         result = bidirectional_search(forward, reverse_problem=reverse)
         assert result.success is True
+        assert result.total_cost == 2.0
 
-    def test_without_reverse_problem(self) -> None:
-        """When no reverse_problem, uses _find_goal fallback."""
+    def test_cost_correctness_weighted_graph(self) -> None:
+        """Verify total_cost is recalculated from actual path edges."""
+        g = Graph[str](directed=False)
+        g.add_edge("A", "B", 3.0)
+        g.add_edge("B", "C", 5.0)
+        g.add_edge("C", "D", 2.0)
+
+        forward = g.to_search_problem("A", "D")
+        reverse = g.to_search_problem("D", "A")
+        result = BidirectionalSearch(forward, reverse_problem=reverse).search()
+
+        assert result.success is True
+        assert result.total_cost == 10.0  # 3 + 5 + 2
+
+    def test_track_explored(self) -> None:
         g = Graph[str](directed=False)
         g.add_edge("A", "B", 1.0)
         g.add_edge("B", "C", 1.0)
         forward = g.to_search_problem("A", "C")
+        reverse = g.to_search_problem("C", "A")
 
-        result = BidirectionalSearch(forward).search()
-        assert result.success is True
-        assert result.path[0] == "A"
-        assert result.path[-1] == "C"
+        result = bidirectional_search(forward, reverse_problem=reverse, track_explored=True)
+        assert result.explored_states is not None
+        assert "A" in result.explored_states

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Generic
 
 from search_library.algorithms.base import SearchAlgorithm
 from search_library.core.problem import SearchProblem
@@ -12,14 +11,17 @@ from search_library.core.types import T
 from search_library.exceptions.exceptions import NoSolutionFoundError, SearchTimeoutError
 
 
-class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
+class BidirectionalSearch(SearchAlgorithm[T]):
     """Bidirectional BFS search algorithm.
 
     Searches simultaneously from start and goal, meeting in the middle.
     Significantly reduces the search space compared to unidirectional BFS.
 
-    Requires a reversible problem (goal state must be known explicitly and
-    successors must be traversable in reverse). Uses BFS from both ends.
+    Requires both a forward problem (start -> goal) and a reverse problem
+    (goal -> start) to be provided explicitly. The reverse problem must
+    define successors in the reverse direction.
+
+    Best suited for undirected graphs or symmetric directed graphs.
 
     Complexity:
         Time:  O(b^(d/2)) where b = branching factor, d = solution depth
@@ -35,15 +37,18 @@ class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
         self,
         problem: SearchProblem[T],
         *,
-        reverse_problem: SearchProblem[T] | None = None,
+        reverse_problem: SearchProblem[T],
     ) -> None:
         """Initialize Bidirectional Search.
 
         Args:
             problem: The forward search problem (start -> goal).
-            reverse_problem: Optional reverse problem (goal -> start).
-                If not provided, the algorithm uses the same problem's
-                successors for the backward search (assumes undirected graph).
+            reverse_problem: The reverse problem (goal -> start).
+                Must define successors from the goal state backward.
+
+        Example:
+            For an undirected graph, reverse_problem is simply
+            graph.to_search_problem(goal, start).
         """
         super().__init__(problem)
         self._reverse_problem = reverse_problem
@@ -58,7 +63,7 @@ class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
         """Execute bidirectional BFS.
 
         Args:
-            max_iterations: Maximum total expansions before aborting.
+            max_iterations: Maximum total node expansions before aborting.
             strict: If True, raises exceptions on failure.
             track_explored: If True, populates explored_states in result.
 
@@ -66,9 +71,8 @@ class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
             SearchResult with the path connecting start to goal.
         """
         initial = self._problem.initial_state()
+        goal = self._reverse_problem.initial_state()
 
-        # For bidirectional search, we need to know the goal state.
-        # We check if initial is goal first.
         if self._problem.is_goal(initial):
             return SearchResult(
                 path=[initial],
@@ -78,26 +82,15 @@ class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
                 explored_states=frozenset({initial}) if track_explored else None,
             )
 
-        # Determine the goal state by checking which state the reverse starts from
-        reverse = self._reverse_problem or self._problem
-        goal = reverse.initial_state() if self._reverse_problem else self._find_goal(initial)
-
-        if goal is None:
-            if strict:
-                raise NoSolutionFoundError("Cannot determine goal state for bidirectional search")
-            return SearchResult(path=[], success=False, nodes_explored=0)
-
         # Forward BFS frontier
         forward_queue: deque[T] = deque([initial])
         forward_visited: set[T] = {initial}
         forward_parent: dict[T, T] = {}
-        forward_cost: dict[T, float] = {initial: 0.0}
 
         # Backward BFS frontier
         backward_queue: deque[T] = deque([goal])
         backward_visited: set[T] = {goal}
         backward_parent: dict[T, T] = {}
-        backward_cost: dict[T, float] = {goal: 0.0}
 
         iterations = 0
 
@@ -114,49 +107,35 @@ class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
                     explored_states=frozenset(all_visited) if track_explored else None,
                 )
 
-            # Expand forward
-            meeting = self._expand_forward(
+            # Expand forward frontier (one node)
+            meeting = self._expand_level(
                 forward_queue, forward_visited, forward_parent,
-                forward_cost, backward_visited,
+                backward_visited, self._problem,
             )
             iterations += 1
 
             if meeting is not None:
-                path, cost = self._build_path(
+                return self._build_result(
                     meeting, forward_parent, backward_parent,
-                    forward_cost, backward_cost, initial, goal,
-                )
-                all_visited = forward_visited | backward_visited
-                return SearchResult(
-                    path=path,
-                    total_cost=cost,
-                    nodes_explored=len(all_visited),
-                    success=True,
-                    explored_states=frozenset(all_visited) if track_explored else None,
+                    initial, goal, forward_visited, backward_visited,
+                    track_explored,
                 )
 
             if not backward_queue:
                 break
 
-            # Expand backward
-            meeting = self._expand_backward(
+            # Expand backward frontier (one node)
+            meeting = self._expand_level(
                 backward_queue, backward_visited, backward_parent,
-                backward_cost, forward_visited, reverse,
+                forward_visited, self._reverse_problem,
             )
             iterations += 1
 
             if meeting is not None:
-                path, cost = self._build_path(
+                return self._build_result(
                     meeting, forward_parent, backward_parent,
-                    forward_cost, backward_cost, initial, goal,
-                )
-                all_visited = forward_visited | backward_visited
-                return SearchResult(
-                    path=path,
-                    total_cost=cost,
-                    nodes_explored=len(all_visited),
-                    success=True,
-                    explored_states=frozenset(all_visited) if track_explored else None,
+                    initial, goal, forward_visited, backward_visited,
+                    track_explored,
                 )
 
         all_visited = forward_visited | backward_visited
@@ -170,95 +149,44 @@ class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
             explored_states=frozenset(all_visited) if track_explored else None,
         )
 
-    def _find_goal(self, initial: T) -> T | None:
-        """Try to find the goal by scanning successors (limited BFS)."""
-        # For bidirectional to work without a reverse_problem,
-        # we need to find what state is_goal returns True for.
-        # We do a limited BFS to find it.
-        queue: deque[T] = deque([initial])
-        visited: set[T] = {initial}
-        for _ in range(10000):
-            if not queue:
-                return None
-            state = queue.popleft()
-            if state != initial and self._problem.is_goal(state):
-                return state
-            for succ, _ in self._problem.successors(state):
-                if succ not in visited:
-                    visited.add(succ)
-                    queue.append(succ)
-                    if self._problem.is_goal(succ):
-                        return succ
-        return None
-
-    def _expand_forward(
-        self,
-        queue: deque[T],
-        visited: set[T],
-        parent: dict[T, T],
-        cost: dict[T, float],
-        other_visited: set[T],
-    ) -> T | None:
-        """Expand one level of forward BFS. Returns meeting point if found."""
-        if not queue:
-            return None
-
-        current = queue.popleft()
-        current_cost = cost[current]
-
-        for successor, step_cost in self._problem.successors(current):
-            if successor in visited:
-                continue
-            visited.add(successor)
-            parent[successor] = current
-            cost[successor] = current_cost + step_cost
-            queue.append(successor)
-
-            if successor in other_visited:
-                return successor
-
-        return None
-
-    def _expand_backward(
-        self,
-        queue: deque[T],
-        visited: set[T],
-        parent: dict[T, T],
-        cost: dict[T, float],
-        other_visited: set[T],
-        reverse_problem: SearchProblem[T],
-    ) -> T | None:
-        """Expand one level of backward BFS. Returns meeting point if found."""
-        if not queue:
-            return None
-
-        current = queue.popleft()
-        current_cost = cost[current]
-
-        for successor, step_cost in reverse_problem.successors(current):
-            if successor in visited:
-                continue
-            visited.add(successor)
-            parent[successor] = current
-            cost[successor] = current_cost + step_cost
-            queue.append(successor)
-
-            if successor in other_visited:
-                return successor
-
-        return None
-
     @staticmethod
-    def _build_path(
+    def _expand_level(
+        queue: deque[T],
+        visited: set[T],
+        parent: dict[T, T],
+        other_visited: set[T],
+        problem: SearchProblem[T],
+    ) -> T | None:
+        """Expand one node from the frontier. Returns meeting point if found."""
+        if not queue:
+            return None
+
+        current = queue.popleft()
+
+        for successor, _ in problem.successors(current):
+            if successor in visited:
+                continue
+            visited.add(successor)
+            parent[successor] = current
+            queue.append(successor)
+
+            if successor in other_visited:
+                return successor
+
+        return None
+
+    def _build_result(
+        self,
         meeting: T,
         forward_parent: dict[T, T],
         backward_parent: dict[T, T],
-        forward_cost: dict[T, float],
-        backward_cost: dict[T, float],
         start: T,
         goal: T,
-    ) -> tuple[list[T], float]:
-        """Build the complete path through the meeting point."""
+        forward_visited: set[T],
+        backward_visited: set[T],
+        track_explored: bool,
+    ) -> SearchResult[T]:
+        """Build the complete path and recalculate true cost."""
         # Forward path: start -> meeting
         forward_path: list[T] = [meeting]
         current = meeting
@@ -275,20 +203,57 @@ class BidirectionalSearch(SearchAlgorithm[T], Generic[T]):
             backward_path.append(current)
 
         full_path = forward_path + backward_path
-        total_cost = forward_cost.get(meeting, 0.0) + backward_cost.get(meeting, 0.0)
 
-        return full_path, total_cost
+        # Recalculate true total cost by summing step costs along the path
+        total_cost = self._calculate_path_cost(full_path)
+
+        all_visited = forward_visited | backward_visited
+        return SearchResult(
+            path=full_path,
+            total_cost=total_cost,
+            nodes_explored=len(all_visited),
+            success=True,
+            explored_states=frozenset(all_visited) if track_explored else None,
+        )
+
+    def _calculate_path_cost(self, path: list[T]) -> float:
+        """Calculate the actual cost of a path by querying forward problem successors.
+
+        Args:
+            path: The complete path from start to goal.
+
+        Returns:
+            Total cost of traversing the path.
+        """
+        total = 0.0
+        for i in range(len(path) - 1):
+            current = path[i]
+            next_state = path[i + 1]
+            # Find the cost of the edge current -> next_state
+            for successor, cost in self._problem.successors(current):
+                if successor == next_state:
+                    total += cost
+                    break
+        return total
 
 
 def bidirectional_search(
     problem: SearchProblem[T],
     *,
-    reverse_problem: SearchProblem[T] | None = None,
+    reverse_problem: SearchProblem[T],
     max_iterations: int | None = None,
     strict: bool = False,
     track_explored: bool = False,
 ) -> SearchResult[T]:
-    """Convenience function for Bidirectional Search."""
+    """Convenience function for Bidirectional Search.
+
+    Args:
+        problem: Forward search problem (start -> goal).
+        reverse_problem: Reverse search problem (goal -> start).
+        max_iterations: Maximum node expansions.
+        strict: If True, raises on failure.
+        track_explored: If True, tracks explored states.
+    """
     solver = BidirectionalSearch(problem, reverse_problem=reverse_problem)
     return solver.search(
         max_iterations=max_iterations, strict=strict, track_explored=track_explored

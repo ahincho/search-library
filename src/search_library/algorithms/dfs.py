@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Generic
-
 from search_library.algorithms.base import SearchAlgorithm
 from search_library.core.problem import SearchProblem
 from search_library.core.result import SearchResult
@@ -11,7 +9,7 @@ from search_library.core.types import T
 from search_library.exceptions.exceptions import NoSolutionFoundError, SearchTimeoutError
 
 
-class DFS(SearchAlgorithm[T], Generic[T]):
+class DFS(SearchAlgorithm[T]):
     """Depth-First Search algorithm.
 
     Explores as deep as possible along each branch before backtracking,
@@ -19,13 +17,13 @@ class DFS(SearchAlgorithm[T], Generic[T]):
 
     Complexity:
         Time:  O(V + E) where V = vertices, E = edges
-        Space: O(V) worst case for the stack (O(d) for branching factor b, depth d)
+        Space: O(V) worst case for the stack
 
     Use cases:
         - Checking if a path exists (not necessarily shortest)
         - Topological sorting
         - Cycle detection
-        - Maze generation/solving (finding any path)
+        - Maze solving (finding any path)
         - Memory-constrained environments (lower space than BFS)
     """
 
@@ -68,11 +66,12 @@ class DFS(SearchAlgorithm[T], Generic[T]):
                 explored_states=frozenset({initial}) if track_explored else None,
             )
 
-        # LIFO stack: stores (state, cost_so_far)
-        stack: list[tuple[T, float]] = [(initial, 0.0)]
+        # LIFO stack: stores (state, cost_so_far, parent_state_or_None)
+        # Storing parent on the stack avoids incorrect came_from overwrites
+        # when a node is reachable from multiple parents.
+        stack: list[tuple[T, float, T | None]] = [(initial, 0.0, None)]
         visited: set[T] = set()
         came_from: dict[T, T] = {}
-        cost_to: dict[T, float] = {initial: 0.0}
         iterations = 0
 
         while stack:
@@ -87,13 +86,17 @@ class DFS(SearchAlgorithm[T], Generic[T]):
                     explored_states=frozenset(visited) if track_explored else None,
                 )
 
-            current, current_cost = stack.pop()
+            current, current_cost, parent = stack.pop()
 
             if current in visited:
                 continue
 
             visited.add(current)
             iterations += 1
+
+            # Record parent only at visit time — guarantees correct path
+            if parent is not None:
+                came_from[current] = parent
 
             if self._problem.is_goal(current):
                 path = self._reconstruct_path(came_from, initial, current)
@@ -107,9 +110,7 @@ class DFS(SearchAlgorithm[T], Generic[T]):
 
             for successor, step_cost in self._problem.successors(current):
                 if successor not in visited:
-                    came_from[successor] = current
-                    cost_to[successor] = current_cost + step_cost
-                    stack.append((successor, current_cost + step_cost))
+                    stack.append((successor, current_cost + step_cost, current))
 
         if strict:
             raise NoSolutionFoundError()
@@ -120,17 +121,6 @@ class DFS(SearchAlgorithm[T], Generic[T]):
             success=False,
             explored_states=frozenset(visited) if track_explored else None,
         )
-
-    @staticmethod
-    def _reconstruct_path(came_from: dict[T, T], start: T, goal: T) -> list[T]:
-        """Reconstruct path from came_from map."""
-        path: list[T] = [goal]
-        current = goal
-        while current != start:
-            current = came_from[current]
-            path.append(current)
-        path.reverse()
-        return path
 
 
 def dfs_search(

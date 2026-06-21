@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Generic
 
 from search_library.algorithms.base import SearchAlgorithm
 from search_library.core.problem import SearchProblem
@@ -12,11 +11,15 @@ from search_library.core.types import T
 from search_library.exceptions.exceptions import NoSolutionFoundError, SearchTimeoutError
 
 
-class BFS(SearchAlgorithm[T], Generic[T]):
+class BFS(SearchAlgorithm[T]):
     """Breadth-First Search algorithm.
 
     Explores nodes level by level using a FIFO queue. Guarantees the
     shortest path (fewest edges) in unweighted graphs.
+
+    Note: In weighted graphs, BFS finds the path with fewest edges but
+    NOT necessarily the minimum total cost. Use Dijkstra or A* for
+    optimal cost paths in weighted graphs.
 
     Complexity:
         Time:  O(V + E) where V = vertices, E = edges
@@ -69,7 +72,6 @@ class BFS(SearchAlgorithm[T], Generic[T]):
         queue: deque[tuple[T, float]] = deque([(initial, 0.0)])
         visited: set[T] = {initial}
         came_from: dict[T, T] = {}
-        cost_to: dict[T, float] = {initial: 0.0}
         iterations = 0
 
         while queue:
@@ -94,7 +96,6 @@ class BFS(SearchAlgorithm[T], Generic[T]):
                 visited.add(successor)
                 came_from[successor] = current
                 new_cost = current_cost + step_cost
-                cost_to[successor] = new_cost
 
                 if self._problem.is_goal(successor):
                     path = self._reconstruct_path(came_from, initial, successor)
@@ -117,17 +118,6 @@ class BFS(SearchAlgorithm[T], Generic[T]):
             success=False,
             explored_states=frozenset(visited) if track_explored else None,
         )
-
-    @staticmethod
-    def _reconstruct_path(came_from: dict[T, T], start: T, goal: T) -> list[T]:
-        """Reconstruct path from came_from map."""
-        path: list[T] = [goal]
-        current = goal
-        while current != start:
-            current = came_from[current]
-            path.append(current)
-        path.reverse()
-        return path
 
 
 def bfs_search(

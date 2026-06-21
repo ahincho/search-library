@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic
 
-T = TypeVar("T")
+from search_library.core.types import T
 
 
 @dataclass(frozen=True)

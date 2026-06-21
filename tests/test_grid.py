@@ -1,9 +1,11 @@
 """Tests for grid module."""
 
+import math
+
 import pytest
 
 from search_library.algorithms.astar import AStarSearch
-from search_library.grid.grid import Grid
+from search_library.grid.grid import DIAGONAL_COST, Grid
 from search_library.grid.grid_search import GridSearchProblem
 from search_library.heuristics.euclidean import EuclideanHeuristic
 from search_library.heuristics.manhattan import ManhattanHeuristic
@@ -86,6 +88,18 @@ class TestGrid:
         neighbors = grid.get_neighbors((1, 1))
         assert len(neighbors) == 8
 
+    def test_diagonal_cost_sqrt2(self) -> None:
+        """Diagonal movements should cost sqrt(2) times base cost."""
+        grid = Grid(3, 3, allow_diagonal=True)
+        neighbors = grid.get_neighbors((1, 1))
+        costs = {pos: cost for pos, cost in neighbors}
+        # Cardinal: cost 1.0
+        assert costs[(0, 1)] == 1.0
+        assert costs[(1, 0)] == 1.0
+        # Diagonal: cost sqrt(2)
+        assert abs(costs[(0, 0)] - DIAGONAL_COST) < 1e-10
+        assert abs(costs[(2, 2)] - DIAGONAL_COST) < 1e-10
+
     def test_set_cost(self) -> None:
         grid = Grid(5, 5)
         grid.set_cost(1, 1, 3.0)
@@ -139,7 +153,7 @@ class TestGridSearchProblem:
         assert result.success is True
         assert result.path[0] == (0, 0)
         assert result.path[-1] == (2, 2)
-        assert result.total_cost == 4.0  # Manhattan optimal
+        assert result.total_cost == 4.0  # Manhattan optimal with 4-dir
 
     def test_grid_with_obstacles(self) -> None:
         """Grid with wall blocking direct path."""
@@ -158,7 +172,6 @@ class TestGridSearchProblem:
         assert result.success is True
         assert result.path[0] == (0, 0)
         assert result.path[-1] == (4, 4)
-        # Verify path doesn't go through obstacles
         for pos in result.path:
             assert not grid.is_obstacle(pos[0], pos[1])
 
@@ -229,6 +242,19 @@ class TestGridSearchProblem:
         assert result.success is True
         assert result.total_cost == 8.0
 
+    def test_diagonal_grid_with_euclidean(self) -> None:
+        """With diagonal movement, Euclidean heuristic is admissible."""
+        grid = Grid(5, 5, allow_diagonal=True)
+        heuristic = EuclideanHeuristic()
+        problem = GridSearchProblem(grid, (0, 0), (4, 4), heuristic)
+        solver = AStarSearch(problem)
+        result = solver.search()
+
+        assert result.success is True
+        # Optimal diagonal path: 4 diagonal moves = 4 * sqrt(2)
+        expected_cost = 4 * math.sqrt(2)
+        assert abs(result.total_cost - expected_cost) < 1e-10
+
     def test_invalid_start_out_of_bounds(self) -> None:
         grid = Grid(3, 3)
         with pytest.raises(ValueError, match="out of bounds"):
@@ -258,7 +284,6 @@ class TestGridSearchProblem:
         result = solver.search()
 
         assert result.nodes_explored > 0
-        assert len(result.explored_states) > 0
 
     def test_path_continuity(self) -> None:
         """Verify each step in path is adjacent to the previous."""
@@ -272,3 +297,40 @@ class TestGridSearchProblem:
             curr = result.path[i]
             dist = abs(prev[0] - curr[0]) + abs(prev[1] - curr[1])
             assert dist == 1, f"Non-adjacent step: {prev} -> {curr}"
+
+    def test_max_iterations_limit(self) -> None:
+        """Test that max_iterations prevents infinite search."""
+        grid = Grid(100, 100)
+        problem = GridSearchProblem(grid, (0, 0), (99, 99))
+        solver = AStarSearch(problem)
+        result = solver.search(max_iterations=10)
+
+        assert result.success is False
+        assert result.nodes_explored <= 10
+
+    def test_strict_mode_raises_no_solution(self) -> None:
+        """Test strict mode raises NoSolutionFoundError."""
+        from search_library.exceptions import NoSolutionFoundError
+
+        matrix = [
+            [0, 0, 0],
+            [0, 1, 1],
+            [0, 1, 0],
+        ]
+        grid = Grid.from_matrix(matrix)
+        problem = GridSearchProblem(grid, (0, 0), (2, 2))
+        solver = AStarSearch(problem)
+
+        with pytest.raises(NoSolutionFoundError):
+            solver.search(strict=True)
+
+    def test_strict_mode_raises_timeout(self) -> None:
+        """Test strict mode raises SearchTimeoutError."""
+        from search_library.exceptions import SearchTimeoutError
+
+        grid = Grid(100, 100)
+        problem = GridSearchProblem(grid, (0, 0), (99, 99))
+        solver = AStarSearch(problem)
+
+        with pytest.raises(SearchTimeoutError):
+            solver.search(max_iterations=5, strict=True)

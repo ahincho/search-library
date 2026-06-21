@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 # Position type: (row, col)
 Position = tuple[int, int]
+
+# Cost multiplier for diagonal movements
+DIAGONAL_COST: float = math.sqrt(2)
 
 # 4-directional movements: up, down, left, right
 FOUR_DIRECTIONS: list[Position] = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -204,6 +208,7 @@ class Grid:
 
         Returns:
             List of (neighbor_position, cost) tuples.
+            Diagonal movements cost sqrt(2) times the cell cost.
         """
         row, col = position
         directions = EIGHT_DIRECTIONS if self.allow_diagonal else FOUR_DIRECTIONS
@@ -212,8 +217,10 @@ class Grid:
         for dr, dc in directions:
             new_row, new_col = row + dr, col + dc
             if self.is_walkable(new_row, new_col):
-                cost = self.get_cost((new_row, new_col))
-                neighbors.append(((new_row, new_col), cost))
+                base_cost = self.get_cost((new_row, new_col))
+                is_diagonal = dr != 0 and dc != 0
+                move_cost = base_cost * DIAGONAL_COST if is_diagonal else base_cost
+                neighbors.append(((new_row, new_col), move_cost))
 
         return neighbors
 

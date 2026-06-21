@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic
 
-T = TypeVar("T")
+from search_library.core.types import T
 
 
 class Heuristic(ABC, Generic[T]):

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Generic, TypeVar
+from typing import Generic
 
-T = TypeVar("T")
+from search_library.core.types import T
 
 
 @dataclass(frozen=True)
@@ -17,14 +17,14 @@ class SearchResult(Generic[T]):
         total_cost: The total cost of the path.
         nodes_explored: Number of nodes explored during the search.
         success: Whether a solution was found.
-        explored_states: Set of all states that were explored.
+        explored_states: Optional set of explored states (only populated if requested).
     """
 
     path: list[T] = field(default_factory=list)
     total_cost: float = 0.0
     nodes_explored: int = 0
     success: bool = False
-    explored_states: frozenset[T] = field(default_factory=frozenset)
+    explored_states: frozenset[T] | None = None
 
     @property
     def path_length(self) -> int:

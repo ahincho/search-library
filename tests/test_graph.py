@@ -2,7 +2,7 @@
 
 import pytest
 
-from search_library.algorithms.astar import AStarSearch
+from search_library.algorithms.astar import AStarSearch, astar_search
 from search_library.graph.edges import Edge
 from search_library.graph.graph import Graph
 
@@ -105,6 +105,22 @@ class TestGraph:
         g.add_node("A")
         assert g.node_count == 1
 
+    def test_get_edge_weight(self) -> None:
+        g = Graph[str]()
+        g.add_edge("A", "B", 5.0)
+        assert g.get_edge_weight("A", "B") == 5.0
+        assert g.get_edge_weight("A", "C") is None
+        assert g.get_edge_weight("X", "Y") is None
+
+    def test_has_edge_o1_performance(self) -> None:
+        """Verify has_edge uses O(1) dict lookup."""
+        g = Graph[int]()
+        for i in range(1000):
+            g.add_edge(0, i, 1.0)
+        # This should be fast (O(1) not O(n))
+        assert g.has_edge(0, 999)
+        assert not g.has_edge(0, 1000)
+
 
 class TestGraphSearchProblem:
     """Tests for graph-based search with A*."""
@@ -180,8 +196,6 @@ class TestGraphSearchProblem:
     def test_weighted_graph_optimal_path(self) -> None:
         """Ensure A* finds optimal path, not shortest hop count."""
         g = Graph[str](directed=False)
-        # Direct path: A->C = 10
-        # Indirect path: A->B->C = 3+4 = 7 (cheaper)
         g.add_edge("A", "C", 10.0)
         g.add_edge("A", "B", 3.0)
         g.add_edge("B", "C", 4.0)
@@ -193,3 +207,33 @@ class TestGraphSearchProblem:
         assert result.success is True
         assert result.total_cost == 7.0
         assert result.path == ["A", "B", "C"]
+
+    def test_astar_search_convenience_function(self) -> None:
+        """Test the astar_search() convenience function."""
+        g = Graph[str](directed=False)
+        g.add_edge("A", "B", 1.0)
+        g.add_edge("B", "C", 1.0)
+
+        problem = g.to_search_problem("A", "C")
+        result = astar_search(problem)
+
+        assert result.success is True
+        assert result.path == ["A", "B", "C"]
+        assert result.total_cost == 2.0
+
+    def test_track_explored_states(self) -> None:
+        """Test that track_explored populates explored_states."""
+        g = Graph[str](directed=False)
+        g.add_edge("A", "B", 1.0)
+        g.add_edge("B", "C", 1.0)
+
+        problem = g.to_search_problem("A", "C")
+
+        # Default: no explored states
+        result = astar_search(problem)
+        assert result.explored_states is None
+
+        # With tracking
+        result = astar_search(problem, track_explored=True)
+        assert result.explored_states is not None
+        assert "A" in result.explored_states

@@ -1,6 +1,6 @@
 """search-library: A professional, extensible search algorithm framework."""
 
-from search_library.algorithms.astar import AStarSearch
+from search_library.algorithms.astar import AStarSearch, astar_search
 from search_library.core.nodes import Node
 from search_library.core.problem import SearchProblem
 from search_library.core.result import SearchResult
@@ -18,4 +18,5 @@ __all__ = [
     "Node",
     "SearchProblem",
     "SearchResult",
+    "astar_search",
 ]

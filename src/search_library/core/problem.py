@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic
 
-T = TypeVar("T")
+from search_library.core.types import T
 
 
 class SearchProblem(ABC, Generic[T]):
@@ -16,8 +16,9 @@ class SearchProblem(ABC, Generic[T]):
     - A goal state (or goal test)
     - A way to generate successors
     - A cost function for transitions
+    - A heuristic function (optional, defaults to 0)
 
-    Type parameter T represents the state type.
+    Type parameter T represents the state type (must be Hashable).
     """
 
     @abstractmethod

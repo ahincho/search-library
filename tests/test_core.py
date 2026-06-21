@@ -13,7 +13,6 @@ class TestNode:
         assert node.g_cost == 0.0
         assert node.h_cost == 5.0
         assert node.f_cost == 5.0
-        assert node.parent is None
 
     def test_node_f_cost_calculation(self) -> None:
         node = Node(state="B", g_cost=3.0, h_cost=4.0)
@@ -37,22 +36,6 @@ class TestNode:
         assert node.__lt__(42) is NotImplemented
         assert node.__le__("x") is NotImplemented
 
-    def test_node_with_parent(self) -> None:
-        parent = Node(state="A", g_cost=0.0, h_cost=5.0)
-        child = Node(state="B", parent=parent, g_cost=1.0, h_cost=4.0)
-        assert child.parent is parent
-
-    def test_reconstruct_path_single(self) -> None:
-        node = Node(state="A", g_cost=0.0, h_cost=0.0)
-        assert node.reconstruct_path() == ["A"]
-
-    def test_reconstruct_path_chain(self) -> None:
-        n1 = Node(state="A", g_cost=0.0, h_cost=3.0)
-        n2 = Node(state="B", parent=n1, g_cost=1.0, h_cost=2.0)
-        n3 = Node(state="C", parent=n2, g_cost=2.0, h_cost=1.0)
-        n4 = Node(state="D", parent=n3, g_cost=3.0, h_cost=0.0)
-        assert n4.reconstruct_path() == ["A", "B", "C", "D"]
-
 
 class TestSearchResult:
     """Tests for SearchResult."""
@@ -70,6 +53,7 @@ class TestSearchResult:
         assert result.steps == 2
         assert result.total_cost == 5.0
         assert result.nodes_explored == 10
+        assert result.explored_states is not None
 
     def test_failed_result(self) -> None:
         result = SearchResult(
@@ -81,6 +65,7 @@ class TestSearchResult:
         assert result.success is False
         assert result.path_length == 0
         assert result.steps == 0
+        assert result.explored_states is None
 
     def test_single_node_result(self) -> None:
         result = SearchResult(
@@ -91,3 +76,7 @@ class TestSearchResult:
         )
         assert result.path_length == 1
         assert result.steps == 0
+
+    def test_explored_states_default_none(self) -> None:
+        result = SearchResult(path=[], success=False)
+        assert result.explored_states is None

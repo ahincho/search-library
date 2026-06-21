@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Generic
 
 from search_library.core.problem import SearchProblem
+from search_library.core.types import T
 from search_library.graph.edges import Edge
 from search_library.heuristics.base import Heuristic
-
-T = TypeVar("T")
 
 
 class Graph(Generic[T]):
     """Weighted directed graph supporting search operations.
 
-    Stores nodes and weighted edges. Can be used as directed or undirected.
+    Uses dict[T, dict[T, float]] internally for O(1) edge lookups.
+    Can be used as directed or undirected.
 
     Attributes:
         directed: Whether the graph is directed.
@@ -28,7 +28,7 @@ class Graph(Generic[T]):
                       in both directions automatically.
         """
         self.directed = directed
-        self._adjacency: dict[T, list[tuple[T, float]]] = {}
+        self._adjacency: dict[T, dict[T, float]] = {}
 
     @property
     def nodes(self) -> set[T]:
@@ -47,10 +47,12 @@ class Graph(Generic[T]):
             node: The node identifier to add.
         """
         if node not in self._adjacency:
-            self._adjacency[node] = []
+            self._adjacency[node] = {}
 
     def add_edge(self, source: T, target: T, weight: float = 1.0) -> None:
         """Add a weighted edge to the graph.
+
+        If an edge already exists, updates its weight.
 
         Args:
             source: The source node.
@@ -66,10 +68,10 @@ class Graph(Generic[T]):
 
         self.add_node(source)
         self.add_node(target)
-        self._adjacency[source].append((target, weight))
+        self._adjacency[source][target] = weight
 
         if not self.directed:
-            self._adjacency[target].append((source, weight))
+            self._adjacency[target][source] = weight
 
     def add_edge_from(self, edge: Edge[T]) -> None:
         """Add an edge from an Edge object.
@@ -94,7 +96,7 @@ class Graph(Generic[T]):
         if node not in self._adjacency:
             msg = f"Node {node!r} not found in graph"
             raise KeyError(msg)
-        return list(self._adjacency[node])
+        return list(self._adjacency[node].items())
 
     def has_node(self, node: T) -> bool:
         """Check if a node exists in the graph.
@@ -108,7 +110,7 @@ class Graph(Generic[T]):
         return node in self._adjacency
 
     def has_edge(self, source: T, target: T) -> bool:
-        """Check if an edge exists between two nodes.
+        """Check if an edge exists between two nodes. O(1) lookup.
 
         Args:
             source: The source node.
@@ -119,7 +121,21 @@ class Graph(Generic[T]):
         """
         if source not in self._adjacency:
             return False
-        return any(neighbor == target for neighbor, _ in self._adjacency[source])
+        return target in self._adjacency[source]
+
+    def get_edge_weight(self, source: T, target: T) -> float | None:
+        """Get the weight of an edge between two nodes.
+
+        Args:
+            source: The source node.
+            target: The target node.
+
+        Returns:
+            The edge weight, or None if no edge exists.
+        """
+        if source not in self._adjacency:
+            return None
+        return self._adjacency[source].get(target)
 
     def to_search_problem(
         self, start: T, goal: T, heuristic: Heuristic[T] | None = None
